@@ -1,0 +1,6 @@
+Number of Nodes in Graph :: 198
+Number of Edges in Graph :: 2742
+AUC of the Model :: 0.5062815268499998
+Precision of the Model :: 0.014045127341957767
+Recall of the Model :: 0.004128880041288807
+Efficiency of the Model :: 1.891341209411621 seconds
