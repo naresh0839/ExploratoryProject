@@ -1,5 +1,0 @@
-Number of edges ::7182
-Number of Nodes ::2361
-Accuracy of the Model :: 0.7044761296545681
-Efficiency of the Model :: 7292.652213811874 seconds
-

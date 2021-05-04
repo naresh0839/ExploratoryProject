@@ -1,14 +1,12 @@
+import random, math, time
 import igraph
+import functools
 from igraph import *
-import random
-import math
-import time
 
 start_time = time.time()
 
-graph = Graph.Read_GML("football.gml")
-#graph = igraph.read("netsience.net", format = "pajek")
-#graph = Graph.Read_GML("football.gml")
+graph = igraph.read("jazz.net", format = "pajek")
+# graph = Graph.Read_GML("karate.gml")
 
 Graph = graph.get_adjacency()		# future testing set
 
@@ -18,9 +16,8 @@ futureGraph = []
 currentGraph = []
 
 for i in range(0, N):
-	tmp = []
-	futureGraph.append(tmp)
-	currentGraph.append(tmp)
+	futureGraph.append([])
+	currentGraph.append([])
 
 edge = 0 	# number of edges present in futureGraph
 edges = []	# list of edges present 
@@ -30,18 +27,15 @@ missing = [] # edges which are constructed between training and testing data
 
 for i in range(0, N):
 	for j in range(i + 1, N):
-		if (Graph[i][j]):
+		if Graph[i][j]:
+			edges.append((i, j))
 			futureGraph[i].append(j)
 			futureGraph[j].append(i)
 			currentGraph[i].append(j)
 			currentGraph[j].append(i)
-			edges.append((i, j))
 			edge += 1
 		else:
 			unconnected.append((i, j))
-			
-print("Number of edges ::"+str(edge))
-print("Number of Nodes ::"+str(N))
 
 delete = int(edge / 10)
 
@@ -53,71 +47,78 @@ for i in range(0, delete):
 	currentGraph[it[0]].remove(it[1])
 	currentGraph[it[1]].remove(it[0])
 
-score1 = {}
-score2 = {}
-score3 = {}
+score = {}
 for x in range(0, N):
-	temp = []
 	for y in range(x + 1, N):
 		Score1 = 0
 		Score2 = 0
 		Score3 = 0
-		score1[(x,y)]= 0
-		score2[(x,y)]= 0
-		score3[(x,y)]= 0
 		for i in range(0, N):
 			if (i in currentGraph[x]) and (i in currentGraph[y]):
 				Score2 += 1
 				Score3 += 1
 				if len(currentGraph[i]) > 1:
 					Score1 += 1 / math.log(len(currentGraph[i]))
-		if len(currentGraph[x])>0 and len(currentGraph[y])>0:
+		if len(currentGraph[x]) > 0 and len(currentGraph[y]) > 0:
 			Score3 = Score3 / math.sqrt(len(currentGraph[x]) * len(currentGraph[y]))
-		score1[(x,y)] = Score1
-		score2[(x,y)] = Score2
-		score3[(x,y)] = Score3
+	
+		score[(x, y)] = (Score1 + Score2 + Score3) / 3
 
-total1 = len(missing) * len(unconnected)
+total = len(missing) * len(unconnected)
 # total is the number of times that we randomly pick a pair of links from missing links set and unconnected links set
-n11 = 0
-n12 = 0
-n21 = 0
-n22 = 0
-n31 = 0
-n32 = 0
+n1 = 0
+# n1 is the number of times that the missing link got a higher score than unconnected link
+n2 = 0
+# n2 is the number of times when they are equal
 
 for x in unconnected:
-	score_un = score1[(x[0], x[1])]
+	score_un = score[(x[0], x[1])]
 	for y in missing:
-		if score1[(y[0], y[1])] > score_un:
-			n11 += 1
-		elif score1[(y[0], y[1])] == score_un:
-			n12 += 1
-	score_un = score2[(x[0], x[1])]
-	for y in missing:
-		if score2[(y[0], y[1])] > score_un:
-			n21 += 1
-		elif score2[(y[0], y[1])] == score_un:
-			n22 += 1
-	score_un = score3[(x[0], x[1])]
-	for y in missing:
-		if score3[(y[0], y[1])] > score_un:
-			n31 += 1
-		elif score3[(y[0], y[1])] == score_un:
-			n32 += 1
+		if score[(y[0], y[1])] > score_un:
+			n1 += 1
+		elif score[(y[0], y[1])] == score_un:
+			n2 += 1
 
-accuracy1 = ((n11 + (0.5 * n12)) / total1)
+AUC = ((n1 + (0.5 * n2)) / total)
 
-total2 = len(missing) * len(unconnected)
+TotalPrecision = 0
+TotalRecall = 0
 
-accuracy2 = ((n21 + (0.5 * n22)) / total2)
+X = -1
+def scorewise(p, q):
+	return score[(min(X, p), max(X, p))] > score[(min(X, q), max(X, q))]
 
-total3 = len(missing) * len(unconnected)
+for x in range(0, N):
+	top_links = []
+	for y in range(0, N):
+		if y != x and ((y in currentGraph[x]) == 0):
+			top_links.append(y)
 
-accuracy3 = ((n31 + (0.5 * n32)) / total3)
+	X = x
+	sorted_top_links = sorted(top_links, key=functools.cmp_to_key(scorewise))
+	
+	count = 0
+	nums = len(sorted_top_links) / 2
+	cur = 0
+	for y in sorted_top_links:
+		if count > nums:
+			break
+		count += 1
+		if ((min(x, y), max(x, y)) in missing):
+			cur += 1
 
-print("Accuracy :: "+str((accuracy1+accuracy2+accuracy3)/3))
+	TotalPrecision += (cur / count)
+	TotalRecall += (cur / len(missing))
+
+TotalPrecision = TotalPrecision / N
+TotalRecall = TotalRecall / N
 
 end_time = time.time()
 
-print("Efficiency of total Model:: " + str(end_time - start_time) + " seconds")
+# Result print
+print("Number of Nodes in Graph :: " + str(N))
+print("Number of Edges in Graph :: " + str(edge))
+print("AUC of the Model :: " + str(AUC))
+print("Precision of the Model :: " + str(TotalPrecision))
+print("Recall of the Model :: " + str(TotalRecall))
+print("Efficiency of the Model :: " + str(end_time - start_time) + " seconds")

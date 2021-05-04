@@ -1,4 +1,0 @@
-Number of Nodes in Graph :: 115
-Number of Edges in Graph :: 613
-Accuracy of the Model :: 0.7794127384387881
-Efficiency of the Model :: 0.31556200981140137 seconds
