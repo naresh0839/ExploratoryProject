@@ -5,8 +5,8 @@ from igraph import *
 
 start_time = time.time()
 
-graph = igraph.read("jazz.net", format = "pajek")
-# graph = Graph.Read_GML("karate.gml")
+graph = igraph.read("netsience.net", format = "pajek")
+# graph = Graph.Read_GML("football.gml")
 
 Graph = graph.get_adjacency()		# future testing set
 
