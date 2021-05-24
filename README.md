@@ -14,6 +14,6 @@ we have used materials (data, theoretical analysis, results) from other sources 
 
 # Collaborators
 
-- Naresh Kumar
+-- Naresh Kumar
 - Shaan Kumar
 - Md Zuhair
